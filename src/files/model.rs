@@ -5,7 +5,7 @@ use time::OffsetDateTime;
 use crate::common::serde::*;
 
 /// Represents a file resource in the Gemini API.
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct File {
     /// The unique identifier for the file.

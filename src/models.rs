@@ -104,8 +104,8 @@ pub enum Part {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct FileData {
-    mime_type: String,
-    file_uri: String,
+    pub mime_type: String,
+    pub file_uri: String,
 }
 
 impl TryFrom<&FileHandle> for FileData {
@@ -381,6 +381,5 @@ pub enum Modality {
     Audio,
     /// Indicates the model should return video.
     Video,
-    #[serde(untagged)]
     Other(String),
 }

@@ -18,6 +18,17 @@ features = [
     "http2",
     "json",
     "stream",
+]
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies.reqwest]
+version = "^0.12.15"
+default-features = false
+features = [
+    "charset",
+    "h2",
+    "http2",
+    "json",
+    "stream",
     "macos-system-configuration",
     "rustls-tls",
 ]
@@ -35,14 +46,21 @@ snafu = { version = "0.8", features = ["backtrace"] }
 eventsource-stream = "0.2"
 mime_guess = "2.0"
 mime = "0.3"
-tokio = { version = "1", features = ["io-util"] }
-time = { version = "0.3", features = ["serde", "parsing", "formatting"] }
+time = { version = "0.3", features = ["serde", "parsing", "formatting", "wasm-bindgen"] }
 tracing = "0.1.41"
 strum = { version = "0.27", features = ["derive"] }
 strum_macros = "0.27"
 schemars = { version = "1.0" }
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1", features = ["io-util"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tokio = { version = "1", default-features = false, features = ["io-util"] }
+
 [dev-dependencies]
 display-error-chain = "0.2"
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 tokio = { version = "^1.47", features = ["full"] }
+
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }

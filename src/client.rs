@@ -37,7 +37,10 @@ use crate::cache::model::*;
 /// A pinned, boxed stream that yields `GenerationResponse` chunks as they arrive
 /// from the API. Used for streaming content generation to receive partial results
 /// before the complete response is ready.
+#[cfg(not(target_arch = "wasm32"))]
 pub type GenerationStream = Pin<Box<dyn Stream<Item = Result<GenerationResponse, Error>> + Send>>;
+#[cfg(target_arch = "wasm32")]
+pub type GenerationStream = Pin<Box<dyn Stream<Item = Result<GenerationResponse, Error>>>>;
 
 static DEFAULT_BASE_URL: LazyLock<Url> = LazyLock::new(|| {
     Url::parse("https://generativelanguage.googleapis.com/v1beta/")
@@ -928,10 +931,26 @@ impl Gemini {
     /// Lists batch operations.
     ///
     /// This method returns a stream that handles pagination automatically.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn list_batches(
         &self,
         page_size: impl Into<Option<u32>>,
     ) -> impl Stream<Item = Result<BatchOperation, Error>> + Send {
+        self.list_batches_inner(page_size)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn list_batches(
+        &self,
+        page_size: impl Into<Option<u32>>,
+    ) -> impl Stream<Item = Result<BatchOperation, Error>> {
+        self.list_batches_inner(page_size)
+    }
+
+    fn list_batches_inner(
+        &self,
+        page_size: impl Into<Option<u32>>,
+    ) -> impl Stream<Item = Result<BatchOperation, Error>> {
         let client = self.client.clone();
         let page_size = page_size.into();
         async_stream::try_stream! {
@@ -967,10 +986,26 @@ impl Gemini {
     /// Lists cached contents.
     ///
     /// This method returns a stream that handles pagination automatically.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn list_cached_contents(
         &self,
         page_size: impl Into<Option<i32>>,
     ) -> impl Stream<Item = Result<CachedContentSummary, Error>> + Send {
+        self.list_cached_contents_inner(page_size)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn list_cached_contents(
+        &self,
+        page_size: impl Into<Option<i32>>,
+    ) -> impl Stream<Item = Result<CachedContentSummary, Error>> {
+        self.list_cached_contents_inner(page_size)
+    }
+
+    fn list_cached_contents_inner(
+        &self,
+        page_size: impl Into<Option<i32>>,
+    ) -> impl Stream<Item = Result<CachedContentSummary, Error>> {
         let client = self.client.clone();
         let page_size = page_size.into();
         async_stream::try_stream! {
@@ -1004,13 +1039,34 @@ impl Gemini {
         Ok(FileHandle::new(self.client.clone(), file))
     }
 
+    /// Create a file handle from an existing file model.
+    pub fn file_from_model(&self, file: crate::files::model::File) -> FileHandle {
+        FileHandle::new(self.client.clone(), file)
+    }
+
     /// Lists files.
     ///
     /// This method returns a stream that handles pagination automatically.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn list_files(
         &self,
         page_size: impl Into<Option<u32>>,
-    ) -> impl Stream<Item = Result<FileHandle, Error>> + Send {
+    ) -> impl Stream<Item = Result<File, Error>> + Send {
+        self.list_files_inner(page_size)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn list_files(
+        &self,
+        page_size: impl Into<Option<u32>>,
+    ) -> impl Stream<Item = Result<File, Error>> {
+        self.list_files_inner(page_size)
+    }
+
+    fn list_files_inner(
+        &self,
+        page_size: impl Into<Option<u32>>,
+    ) -> impl Stream<Item = Result<File, Error>> {
         let client = self.client.clone();
         let page_size = page_size.into();
         async_stream::try_stream! {
@@ -1021,7 +1077,7 @@ impl Gemini {
                     .await?;
 
                 for file in response.files {
-                    yield FileHandle::new(client.clone(), file);
+                    yield file;
                 }
 
                 if let Some(next_page_token) = response.next_page_token {
